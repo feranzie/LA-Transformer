@@ -82,7 +82,7 @@ class PersonTracker:
     def __init__(self, reid_model_path: str, 
                  yolo_model: str = "yolov8n.pt",
                  similarity_threshold: float = 0.6,
-                 max_missed_frames: int = 30):
+                 max_missed_frames: int = 3000):
         """
         Initialize tracker with both YOLOv8 and LA-Transformer
         """
@@ -188,6 +188,8 @@ class PersonTracker:
             
             # Draw ID and age
             text = f"ID: {track.id} Age: {track.age}"
+            print(f'track id of {track.id} with {track.age} detected at x {(x1+x2)/2} and y {(y1+y2)/2}')
+            
             cv2.putText(vis_frame, text, (x1, y1-10),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
             
@@ -199,16 +201,16 @@ def main():
     tracker = PersonTracker(
         reid_model_path='model/net_best.pth',
         yolo_model='yolov8n.pt',
-        similarity_threshold=0.5
+        similarity_threshold=0.6
     )
     
     # Initialize video capture
-    cap = cv2.VideoCapture("/notebooks/20240725T203000_Trimm.mp4")  # Use 0 for webcam or video file path
+    cap = cv2.VideoCapture("/notebooks/20241003T122001.mkv")  # Use 0 for webcam or video file path
     fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Adjust the codec as needed (e.g., 'mp4v')
     output_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     output_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    out = cv2.VideoWriter('0.5idtesttrack.mp4', fourcc, 20.0, (output_width, output_height))  # Adjust filename and frame size
+    out = cv2.VideoWriter('3idtesttrack.mp4', fourcc, 20.0, (output_width, output_height))  # Adjust filename and frame size
     with tqdm(total=total_frames, desc="Processing frames") as pbar:
         while True:
             ret, frame = cap.read()
@@ -217,7 +219,6 @@ def main():
 
             # Update tracking
             tracks = tracker.update(frame)
-
             # Visualize
             vis_frame = tracker.draw_tracks(frame)
 
@@ -226,6 +227,7 @@ def main():
             out.write(vis_frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+            #print(f'pbar is {pbar}')
             pbar.update(1)
     cap.release()
     out.release()
